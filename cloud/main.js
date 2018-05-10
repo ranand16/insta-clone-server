@@ -1,61 +1,34 @@
-var Jimp = require("jimp");
+// var imageMagick = require('imagemagick');
+var jimp = require('jimp');
 
 Parse.Cloud.define('hello', function(req, res) {
   res.success('Hi');
 });
 
 Parse.Cloud.beforeSave("Post", function(request, response) {
-  Parse.Cloud.httpRequest({
-      url: request.object.get("imageFile").url()
-  }).then(function(res) {
-    console.log(res);
-    Jimp.read(res.buffer).then(function (lenna) {
-        var newImage = lenna
+    
+    var imgUrl = request.object.get("imageFile").url();
+    // console.log("\n"+imgUrl.split('.')[0]+"_50.png"+ "\n "+ imgUrl.split('myAppId')[0]+"myAppId/ "+"\n");
+    jimp.read(imgUrl).then(function (img) {
 
-        var currentWidth = lenna.bitmap.width;
-        var currentHeight = lenna.bitmap.height;
-
-        // for 50% size
-        var editedWidth_One = currentWidth * 0.5;
-        var editedHeight_One = currentHeight * 0.5;
-        newImage.resize(editedWidth_One, editedHeight_One);
-        // console.log(newImage);
-        newImage.getBuffer( newImage.getMIME(), function(req,result){
-          // console.log(req);            
-          // console.log("res : "+result.getBase64);
-          
-        var imageFile_50 = new Parse.File("imageFile_50",result, "image/png");
-        imageFile_50.save({
-          success: function(file){
-            request.object.set("imageFile_50", file);
-            request.object.save();
-          },error: function(err){
-
-          }
-        });
-
-        });
-        
-        
-
-//         // ------------FOR FUTURE USE ---------
-
-//         // for 75% size
-//         // var editedWidth_Two = currentWidth * 0.75;
-//         // var editedHeight_Two = currentHeight * 0.75;
-                
-//         // for 25% size
-//         // var editedWidth_Three = currentWidth * 0.25;
-//         // var editedHeight_Three = currentHeight * 0.25;
-
-//         // ------------FOR FUTURE USE ---------
-
+      let newImg = img.resize(img.bitmap.width/2, jimp.AUTO);
+      console.log(newImg);     // resize
+      var parseFile = new Parse.File("image_50.png", newImg.buffer);
+      parseFile.save().then(function() {
+        // The file has been saved to Parse.
+        console.log("saved");
+      }, function(error) {
+        // The file either could not be read, or could not be saved to Parse.
+      });
+    }).then((res)=>{
+      console.log("\n");
+      console.log(res);
+      response.success();
     }).catch(function (err) {
-        console.error(err);
-    });
-    response.success();
+      console.error(err);
+    });  
+    
+ 
   },function(error) {
       response.error("HEYyyyyyyy "+error);
-  });
-
 });
